@@ -5,9 +5,8 @@ use ort::session::Session;
 use ort::value::Tensor;
 
 const GESTURE_CLASSES: &[&str] = &[
-    "call", "dislike", "fist", "four", "like", "mute", "ok", "one", "palm", "peace",
-    "peace_inverted", "rock", "stop", "stop_inverted", "three", "three2", "two_up",
-    "two_up_inverted",
+    "call", "dislike", "fist", "four", "grabbing", "grip", "like", "middle_finger", "mute", "no_gesture", "ok", "one", "palm", 
+    "peace", "peace_inverted", "rock", "stop", "stop_inverted", "three", "three2", "three3", "two_up", "two_up_inverted"
 ];
 
 const MODEL_WIDTH: i32 = 224;
@@ -22,7 +21,7 @@ pub fn run_gesture_loop() -> anyhow::Result<()> {
 
     let model_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("models")
-        .join("gesture.onnx");
+        .join("hagrid_vit_gesture.onnx");
 
     let mut session = Session::builder()?.commit_from_file(model_path)?;
     let mut enigo = Enigo::new(&Settings::default())?;
@@ -96,13 +95,16 @@ fn preprocess_frame(frame: &core::Mat) -> anyhow::Result<Tensor<f32>> {
     let h = MODEL_HEIGHT as usize;
     let w = MODEL_WIDTH as usize;
 
-    // Normalize [0,255] → [0,1] and convert HWC → CHW
-    let pixels: Vec<f32> = data.iter().map(|&b| b as f32 / 255.0).collect();
+    // ImageNet normalization: (x/255 - mean) / std, per channel (R, G, B)
+    const MEAN: [f32; 3] = [0.485, 0.456, 0.406];
+    const STD:  [f32; 3] = [0.229, 0.224, 0.225];
+
     let mut chw = vec![0f32; 3 * h * w];
     for row in 0..h {
         for col in 0..w {
             for ch in 0..3 {
-                chw[ch * h * w + row * w + col] = pixels[(row * w + col) * 3 + ch];
+                let raw = data[(row * w + col) * 3 + ch] as f32 / 255.0;
+                chw[ch * h * w + row * w + col] = (raw - MEAN[ch]) / STD[ch];
             }
         }
     }
