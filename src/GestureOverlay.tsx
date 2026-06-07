@@ -11,6 +11,7 @@ export function GestureOverlay() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [detection, setDetection] = useState<GestureEvent | null>(null);
+  const [camError, setCamError] = useState<string | null>(null);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -20,7 +21,11 @@ export function GestureOverlay() {
         stream = s;
         if (videoRef.current) videoRef.current.srcObject = s;
       })
-      .catch(console.error);
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("getUserMedia failed:", msg);
+        setCamError(msg);
+      });
     return () => stream?.getTracks().forEach((t) => t.stop());
   }, []);
 
@@ -84,6 +89,15 @@ export function GestureOverlay() {
         boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
       }}
     >
+      {camError ? (
+        <div style={{
+          position: "absolute", inset: 0, display: "flex", alignItems: "center",
+          justifyContent: "center", padding: 8, color: "#ff6b6b",
+          fontSize: 11, textAlign: "center", zIndex: 1,
+        }}>
+          {camError}
+        </div>
+      ) : null}
       <video
         ref={videoRef}
         autoPlay

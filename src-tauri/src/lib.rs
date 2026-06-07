@@ -1,4 +1,6 @@
+mod agent;
 mod gesture;
+mod voice;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -17,6 +19,40 @@ pub fn run() {
                     eprintln!("Gesture detection error: {e}");
                 }
             });
+
+            #[cfg(target_os = "windows")]
+            {
+                use tauri::Manager;
+                let window = app.get_webview_window("main").unwrap();
+                window.with_webview(|wv| {
+                    use webview2_com::{
+                        Microsoft::Web::WebView2::Win32::*,
+                        PermissionRequestedEventHandler,
+                    };
+                    unsafe {
+                        let core = wv.controller().CoreWebView2().unwrap();
+                        let mut token = Default::default();
+                        core.add_PermissionRequested(
+                            &PermissionRequestedEventHandler::create(Box::new(|_, args| {
+                                if let Some(args) = args {
+                                    let kind = args.PermissionKind()?;
+                                    if matches!(
+                                        kind,
+                                        COREWEBVIEW2_PERMISSION_KIND_CAMERA
+                                            | COREWEBVIEW2_PERMISSION_KIND_MICROPHONE
+                                    ) {
+                                        args.SetState(COREWEBVIEW2_PERMISSION_STATE_ALLOW)?;
+                                    }
+                                }
+                                Ok(())
+                            })),
+                            &mut token,
+                        )
+                        .unwrap();
+                    }
+                })?;
+            }
+
             Ok(())
         })
         .run(tauri::generate_context!())

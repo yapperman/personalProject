@@ -30,4 +30,12 @@ rdev = "0.5"
 rig-core = "0.6"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1"
+fastembed = "5"
+walkdir = "2"
+open = "5"
+urlencoding = "2"
+bincode = "1"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+webview2-com = "0.38"
 

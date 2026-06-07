@@ -16,7 +16,7 @@ function App() {
   return (
     <main className="container">
       <GestureOverlay />
-      <h1>Welcome to Tauri + React</h1>
+      <h1>Hi, I'm Jarvis</h1>
 
       <div className="row">
         <a href="https://vite.dev" target="_blank">
@@ -29,7 +29,7 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
+      <p></p>
 
       <form
         className="row"
