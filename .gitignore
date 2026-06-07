@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# any AI/ML models because they are large and can be downloaded from the source
+src-tauri/models/
