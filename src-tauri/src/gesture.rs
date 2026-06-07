@@ -3,6 +3,14 @@ use ndarray::Array4;
 use opencv::{core, imgproc, prelude::*, videoio};
 use ort::session::Session;
 use ort::value::Tensor;
+use tauri::Emitter;
+
+#[derive(serde::Serialize, Clone)]
+struct GestureEvent {
+    gesture: String,
+    confidence: f32,
+    detected: bool,
+}
 
 const GESTURE_CLASSES: &[&str] = &[
     "call", "dislike", "fist", "four", "grabbing", "grip", "like", "middle_finger", "mute", "no_gesture", "ok", "one", "palm", 
@@ -13,7 +21,7 @@ const MODEL_WIDTH: i32 = 224;
 const MODEL_HEIGHT: i32 = 224;
 const CONFIDENCE_THRESHOLD: f32 = 0.80;
 
-pub fn run_gesture_loop() -> anyhow::Result<()> {
+pub fn run_gesture_loop(app: tauri::AppHandle) -> anyhow::Result<()> {
     let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
     if !cam.is_opened()? {
         anyhow::bail!("Could not open webcam");
@@ -49,6 +57,11 @@ pub fn run_gesture_loop() -> anyhow::Result<()> {
         if confidence < CONFIDENCE_THRESHOLD {
             last_gesture.clear();
             gesture_hold_count = 0;
+            let _ = app.emit("gesture-detection", GestureEvent {
+                gesture: String::new(),
+                confidence,
+                detected: false,
+            });
             continue;
         }
 
@@ -56,6 +69,12 @@ pub fn run_gesture_loop() -> anyhow::Result<()> {
             .get(gesture_idx)
             .copied()
             .unwrap_or("unknown");
+
+        let _ = app.emit("gesture-detection", GestureEvent {
+            gesture: gesture.to_string(),
+            confidence,
+            detected: true,
+        });
 
         if gesture == last_gesture {
             gesture_hold_count += 1;

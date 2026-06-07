@@ -1,5 +1,5 @@
 [env]
-OPENCV_INCLUDE_PATHS = "C:/vcpkg/installed/x64-windows/include/opencv4,C:/msvc-inc,C:/winsdk-ucrt,C:/winsdk-um,C:/winsdk-shared"
+OPENCV_INCLUDE_PATHS = { value = "C:/vcpkg/installed/x64-windows/include/opencv4,C:/msvc-inc,C:/winsdk-ucrt,C:/winsdk-um,C:/winsdk-shared", force = true }
 OPENCV_LINK_PATHS    = "C:/vcpkg/installed/x64-windows/lib"
 OPENCV_LINK_LIBS     = "opencv_aruco4,opencv_bgsegm4,opencv_bioinspired4,opencv_calib3d4,opencv_ccalib4,opencv_core4,opencv_datasets4,opencv_dnn4,opencv_dnn_objdetect4,opencv_dnn_superres4,opencv_dpm4,opencv_face4,opencv_features2d4,opencv_flann4,opencv_fuzzy4,opencv_hfs4,opencv_highgui4,opencv_imgcodecs4,opencv_imgproc4,opencv_img_hash4,opencv_intensity_transform4,opencv_line_descriptor4,opencv_mcc4,opencv_ml4,opencv_objdetect4,opencv_optflow4,opencv_phase_unwrapping4,opencv_photo4,opencv_plot4,opencv_rapid4,opencv_reg4,opencv_saliency4,opencv_shape4,opencv_signal4,opencv_stereo4,opencv_stitching4,opencv_structured_light4,opencv_superres4,opencv_surface_matching4,opencv_tracking4,opencv_video4,opencv_videoio4,opencv_videostab4,opencv_wechat_qrcode4,opencv_xfeatures2d4,opencv_ximgproc4,opencv_xobjdetect4,opencv_xphoto4"
 LIBCLANG_PATH        = "C:/Program Files/LLVM/bin"

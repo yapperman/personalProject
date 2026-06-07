@@ -1,6 +1,7 @@
 import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
+import { GestureOverlay } from "./GestureOverlay";
 import "./App.css";
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
 
   return (
     <main className="container">
+      <GestureOverlay />
       <h1>Welcome to Tauri + React</h1>
 
       <div className="row">
