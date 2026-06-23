@@ -50,7 +50,7 @@ fn cosine_sim(a: &[f32], b: &[f32]) -> f32 {
 /// Walk the home directory and embed all readable files into a flat binary index.
 /// Downloads the AllMiniLML6V2 model (~25 MB) on first run.
 pub fn index_filesystem() -> anyhow::Result<()> {
-    let model = init_embedder()?;
+    let mut model = init_embedder()?;
 
     let mut texts: Vec<String> = Vec::new();
     let mut paths: Vec<String> = Vec::new();
@@ -117,7 +117,7 @@ pub fn find_file(_app: tauri::AppHandle, query: String) -> anyhow::Result<String
         anyhow::bail!("File index is empty");
     }
 
-    let model = init_embedder()?;
+    let mut model = init_embedder()?;
     let query_vec: Vec<f32> = model.embed(vec![query], None)?.remove(0);
 
     let best = index
