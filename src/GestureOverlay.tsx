@@ -8,25 +8,13 @@ interface GestureEvent {
 }
 
 export function GestureOverlay() {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [detection, setDetection] = useState<GestureEvent | null>(null);
-  const [camError, setCamError] = useState<string | null>(null);
+  const [frameUrl, setFrameUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    let stream: MediaStream | null = null;
-    navigator.mediaDevices
-      .getUserMedia({ video: { width: 240, height: 180, facingMode: "user" } })
-      .then((s) => {
-        stream = s;
-        if (videoRef.current) videoRef.current.srcObject = s;
-      })
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error("getUserMedia failed:", msg);
-        setCamError(msg);
-      });
-    return () => stream?.getTracks().forEach((t) => t.stop());
+    const unlisten = listen<string>("camera-frame", (e) => setFrameUrl(e.payload));
+    return () => { unlisten.then((f) => f()); };
   }, []);
 
   useEffect(() => {
@@ -89,22 +77,10 @@ export function GestureOverlay() {
         boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
       }}
     >
-      {camError ? (
-        <div style={{
-          position: "absolute", inset: 0, display: "flex", alignItems: "center",
-          justifyContent: "center", padding: 8, color: "#ff6b6b",
-          fontSize: 11, textAlign: "center", zIndex: 1,
-        }}>
-          {camError}
-        </div>
-      ) : null}
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        playsInline
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-      />
+      {frameUrl
+        ? <img src={frameUrl} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#666", fontSize: 11 }}>Waiting for camera…</div>
+      }
       <canvas
         ref={canvasRef}
         width={240}

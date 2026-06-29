@@ -1,6 +1,7 @@
 use enigo::{Button, Direction, Enigo, Key, Keyboard, Mouse, Settings};
 use ndarray::Array4;
-use opencv::{core, imgproc, prelude::*, videoio};
+use base64::Engine as _;
+use opencv::{core, imgcodecs, imgproc, prelude::*, videoio};
 use ort::session::Session;
 use ort::value::Tensor;
 use tauri::Emitter;
@@ -21,11 +22,27 @@ const MODEL_WIDTH: i32 = 224;
 const MODEL_HEIGHT: i32 = 224;
 const CONFIDENCE_THRESHOLD: f32 = 0.80;
 
-pub fn run_gesture_loop(app: tauri::AppHandle) -> anyhow::Result<()> {
-    let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
-    if !cam.is_opened()? {
-        anyhow::bail!("Could not open webcam");
+fn open_webcam() -> anyhow::Result<videoio::VideoCapture> {
+    // On Windows, CAP_DSHOW is more reliable than CAP_ANY/CAP_MSMF for most webcams.
+    // Try DSHOW first, then MSMF, then the generic backend.
+    let backends = [videoio::CAP_DSHOW, videoio::CAP_MSMF, videoio::CAP_ANY];
+    for &backend in &backends {
+        for index in 0..3i32 {
+            if let Ok(cam) = videoio::VideoCapture::new(index, backend) {
+                if cam.is_opened().unwrap_or(false) {
+                    return Ok(cam);
+                }
+            }
+        }
     }
+    anyhow::bail!(
+        "Could not open webcam. Check that a camera is connected and that \
+         Windows Settings > Privacy > Camera has 'Allow desktop apps to access your camera' enabled."
+    )
+}
+
+pub fn run_gesture_loop(app: tauri::AppHandle) -> anyhow::Result<()> {
+    let mut cam = open_webcam()?;
 
     let model_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("models")
@@ -36,12 +53,32 @@ pub fn run_gesture_loop(app: tauri::AppHandle) -> anyhow::Result<()> {
 
     let mut last_gesture = String::new();
     let mut gesture_hold_count: u32 = 0;
+    let mut frame_count: u64 = 0;
+
+    let jpeg_params = core::Vector::<i32>::from_slice(&[imgcodecs::IMWRITE_JPEG_QUALITY, 60]);
 
     loop {
         let mut frame = core::Mat::default();
         cam.read(&mut frame)?;
         if frame.empty() {
             continue;
+        }
+
+        // Emit a preview frame at ~15fps (every other frame). The frontend displays
+        // these instead of calling getUserMedia, avoiding dual-consumer camera conflicts.
+        frame_count += 1;
+        if frame_count % 2 == 0 {
+            let mut preview = core::Mat::default();
+            if imgproc::resize(&frame, &mut preview, core::Size::new(240, 180), 0.0, 0.0, imgproc::INTER_LINEAR).is_ok() {
+                let mut jpeg_buf = core::Vector::<u8>::new();
+                if imgcodecs::imencode(".jpg", &preview, &mut jpeg_buf, &jpeg_params).is_ok() {
+                    let data_url = format!(
+                        "data:image/jpeg;base64,{}",
+                        base64::engine::general_purpose::STANDARD.encode(jpeg_buf.as_slice())
+                    );
+                    let _ = app.emit("camera-frame", data_url);
+                }
+            }
         }
 
         let input_tensor = preprocess_frame(&frame)?;

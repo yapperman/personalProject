@@ -35,7 +35,8 @@ pub fn run() {
                         core.add_PermissionRequested(
                             &PermissionRequestedEventHandler::create(Box::new(|_, args| {
                                 if let Some(args) = args {
-                                    let kind = args.PermissionKind()?;
+                                    let mut kind = COREWEBVIEW2_PERMISSION_KIND::default();
+                                    args.PermissionKind(&mut kind)?;
                                     if matches!(
                                         kind,
                                         COREWEBVIEW2_PERMISSION_KIND_CAMERA
