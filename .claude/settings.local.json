@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(npm *)"
+      "PowerShell(npm *)",
+      "Skill(run)",
+      "Bash(git add *)"
     ]
   }
 }

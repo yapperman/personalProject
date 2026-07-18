@@ -65,7 +65,7 @@ export function GestureOverlay() {
     <div
       style={{
         position: "fixed",
-        top: 16,
+        top: 68,
         right: 16,
         width: 240,
         height: 180,
